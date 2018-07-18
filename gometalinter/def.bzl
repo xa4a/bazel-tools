@@ -2,16 +2,21 @@ load("@bazel_skylib//:lib.bzl", "paths", "shell")
 
 def _gometalinter_impl(ctx):
     args = []
+    paths_from_file = ""
     if ctx.attr.config:
         args.append("--config=" + ctx.file.config.short_path)
     else:
         args.append("--no-config")
-    args.extend(ctx.attr.paths)
+    if ctx.attr.paths:
+        args.extend(ctx.attr.paths)
+    if ctx.attr.paths_from_file:
+        paths_from_file = "$(cat %s)" % shell.quote(ctx.file.paths_from_file.short_path)
     out_file = ctx.actions.declare_file(ctx.label.name + ".bash")
     substitutions = {
         "@@PREFIX_DIR_PATH@@": shell.quote(paths.dirname(ctx.attr.prefix)),
         "@@PREFIX_BASE_NAME@@": shell.quote(paths.basename(ctx.attr.prefix)),
         "@@ARGS@@": shell.array_literal(args),
+        "@@PATHS_FROM_FILE@@": paths_from_file,
         "@@GOMETALINTER_SHORT_PATH@@": shell.quote(ctx.executable._gometalinter.short_path),
     }
     ctx.actions.expand_template(
@@ -44,7 +49,10 @@ _gometalinter = rule(
         ),
         "paths": attr.string_list(
             doc = "Directories to lint. <path>/... will recurse",
-            default = ["./..."],
+        ),
+        "paths_from_file": attr.label(
+            allow_single_file = True,
+            doc = "Source directories to lint from a file. <path> per line, <path>/... will recurse",
         ),
         "prefix": attr.string(
             mandatory = True,
