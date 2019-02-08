@@ -1,0 +1,5 @@
+load("@atlassian_bazel_tools//kind:def.bzl", "kind_cluster")
+
+kind_cluster(
+    name = "testkind",
+)
