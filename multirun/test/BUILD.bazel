@@ -141,11 +141,14 @@ command(
     command = ":exit",
 )
 
+# We are not testing SIGINT because it's tricky to do.
+# See https://unix.stackexchange.com/questions/356408/strange-problem-with-trap-and-sigint
+
 sh_test(
     name = "test_multirun_parallel_sigterm",
     srcs = ["test_compare_content.sh"],
     args = [
-        "'$(location :run_and_kill) $(location :multirun_parallel_signal_handling) 2 SIGTERM'",
+        "'$(location :run_and_kill) $(location :multirun_parallel_signal_handling) 3 SIGTERM'",
         "143",
         "$(location expected_parallel_sigterm.txt)",
     ],
@@ -157,45 +160,15 @@ sh_test(
 )
 
 sh_test(
-    name = "test_multirun_parallel_sigint",
-    srcs = ["test_compare_content.sh"],
-    args = [
-        "'$(location :run_and_kill) $(location :multirun_parallel_signal_handling) 2 SIGINT'",
-        "143",
-        "$(location expected_parallel_sigint.txt)",
-    ],
-    data = [
-        "expected_parallel_sigint.txt",
-        ":multirun_parallel_signal_handling",
-        ":run_and_kill",
-    ],
-)
-
-sh_test(
     name = "test_multirun_sigterm",
     srcs = ["test_compare_content.sh"],
     args = [
-        "'$(location :run_and_kill) $(location :multirun_signal_handling) 2 SIGTERM'",
+        "'$(location :run_and_kill) $(location :multirun_signal_handling) 3 SIGTERM'",
         "143",
         "$(location expected_sigterm.txt)",
     ],
     data = [
         "expected_sigterm.txt",
-        ":multirun_signal_handling",
-        ":run_and_kill",
-    ],
-)
-
-sh_test(
-    name = "test_multirun_sigint",
-    srcs = ["test_compare_content.sh"],
-    args = [
-        "'$(location :run_and_kill) $(location :multirun_signal_handling) 2 SIGINT'",
-        "143",
-        "$(location expected_sigint.txt)",
-    ],
-    data = [
-        "expected_sigint.txt",
         ":multirun_signal_handling",
         ":run_and_kill",
     ],
