@@ -30,10 +30,33 @@ runfiles_export_envvars
 
 """
 
+_SEQUENTIAL_PREFIX = """
+_pid=
+_terminate_pid() {
+    kill $_pid 2>/dev/null || true
+}
+trap _terminate_pid TERM INT
+_run() {
+    echo "Running $1"
+    shift
+    $@ &
+    _pid=$!
+    wait $_pid
+    _pid=
+}
+"""
+
 _PARALLEL_PREFIX = """
 _pids=()
+_terminate_pids() {
+    for pid in "${_pids[@]}"
+    do
+        kill $pid 2>/dev/null || true
+    done
+}
+trap _terminate_pids TERM INT
 # Executes command with args in $2...$N, prepending "[$1] " to each line of stdout, in the background.
-_parallel() {
+_run() {
     tag=$1
     shift
     $@ | while read -r
@@ -57,6 +80,8 @@ def _multirun_impl(ctx):
 
     if ctx.attr.parallel:
         content.append(_PARALLEL_PREFIX)
+    else:
+        content.append(_SEQUENTIAL_PREFIX)
 
     for command in ctx.attr.commands:
         defaultInfo = command[DefaultInfo]
@@ -69,10 +94,7 @@ def _multirun_impl(ctx):
         default_runfiles = defaultInfo.default_runfiles
         if default_runfiles != None:
             runfiles = runfiles.merge(default_runfiles)
-        if ctx.attr.parallel:
-            content.append("_parallel %s ./%s $@\n" % (shell.quote(str(command.label)), shell.quote(exe.short_path)))
-        else:
-            content.append("echo Running %s\n./%s $@\n" % (shell.quote(str(command.label)), shell.quote(exe.short_path)))
+        content.append("_run %s ./%s $@\n" % (shell.quote(str(command.label)), shell.quote(exe.short_path)))
 
     if ctx.attr.parallel:
         content.append(_PARALLEL_SUFFIX)
