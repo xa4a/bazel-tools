@@ -14,7 +14,7 @@ ln -snf\
     "src/${PREFIX_DIR_PATH}/${PREFIX_BASE_NAME}"
 
 DIRECTORY="$(pwd -P)"
-NEW_GOPATH="${DIRECTORY}"
+NEW_GOPATH="@@NEW_GOPATH@@"
 NEW_GOROOT="${DIRECTORY}/${NEW_GOROOT}"
 NEW_PATH="${NEW_GOPATH}/external/com_github_atlassian_bazel_tools_golangcilint:${NEW_GOROOT}/bin:${PATH}"
 
@@ -27,7 +27,9 @@ cd "${CURDIR}"
     GOPATH="${NEW_GOPATH}"\
     GOROOT="${NEW_GOROOT}"\
     GOCACHE="$(mktemp -d)"\
+    GOMODCACHE="$(mktemp -d)"\
     GOLANGCI_LINT_CACHE="$(mktemp -d)"\
+    GO111MODULE=@@GO111MODULE@@\
     PATH="${NEW_PATH}"\
     PWD="${CURDIR}"\
     "${golangcilint_short_path}"\
